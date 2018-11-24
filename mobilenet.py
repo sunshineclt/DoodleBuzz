@@ -128,17 +128,18 @@ print('Validation array memory {:.2f} GB'.format(x_valid.nbytes / 1024. ** 3))
 
 train_datagen = image_generator_xd(size=size, batchsize=batchsize, ks=range(NCSVS - 1))
 
-x, y = next(train_datagen)
-n = 8
-fig, axs = plt.subplots(nrows=n, ncols=n, sharex=True, sharey=True, figsize=(12, 12))
-for i in range(n ** 2):
-    ax = axs[i // n, i % n]
-    (-x[i] + 1) / 2
-    ax.imshow((-x[i, :, :, 0] + 1) / 2, cmap=plt.cm.gray)
-    ax.axis('off')
-plt.tight_layout()
-fig.savefig('gs.png', dpi=300)
-plt.show()
+if 'Darwin' in platform():
+    x, y = next(train_datagen)
+    n = 8
+    fig, axs = plt.subplots(nrows=n, ncols=n, sharex=True, sharey=True, figsize=(12, 12))
+    for i in range(n ** 2):
+        ax = axs[i // n, i % n]
+        (-x[i] + 1) / 2
+        ax.imshow((-x[i, :, :, 0] + 1) / 2, cmap=plt.cm.gray)
+        ax.axis('off')
+    plt.tight_layout()
+    fig.savefig('gs.png', dpi=300)
+    plt.show()
 
 callbacks = [
     ReduceLROnPlateau(monitor='val_categorical_accuracy', factor=0.5, patience=5,
@@ -166,24 +167,49 @@ hist = model.fit_generator(
 )
 hists.append(hist)
 
-hist_df = pd.concat([pd.DataFrame(hist.history) for hist in hists], sort=True)
-hist_df.index = np.arange(1, len(hist_df) + 1)
-fig, axs = plt.subplots(nrows=2, sharex=True, figsize=(16, 10))
-axs[0].plot(hist_df.val_categorical_accuracy, lw=5, label='Validation Accuracy')
-axs[0].plot(hist_df.categorical_accuracy, lw=5, label='Training Accuracy')
-axs[0].set_ylabel('Accuracy')
-axs[0].set_xlabel('Epoch')
-axs[0].grid()
-axs[0].legend(loc=0)
-axs[1].plot(hist_df.val_categorical_crossentropy, lw=5, label='Validation MLogLoss')
-axs[1].plot(hist_df.categorical_crossentropy, lw=5, label='Training MLogLoss')
-axs[1].set_ylabel('MLogLoss')
-axs[1].set_xlabel('Epoch')
-axs[1].grid()
-axs[1].legend(loc=0)
-fig.savefig('hist.png', dpi=300)
-plt.show()
+if 'Darwin' in platform():
+    hist_df = pd.concat([pd.DataFrame(hist.history) for hist in hists], sort=True)
+    hist_df.index = np.arange(1, len(hist_df) + 1)
+    fig, axs = plt.subplots(nrows=2, sharex=True, figsize=(16, 10))
+    axs[0].plot(hist_df.val_categorical_accuracy, lw=5, label='Validation Accuracy')
+    axs[0].plot(hist_df.categorical_accuracy, lw=5, label='Training Accuracy')
+    axs[0].set_ylabel('Accuracy')
+    axs[0].set_xlabel('Epoch')
+    axs[0].grid()
+    axs[0].legend(loc=0)
+    axs[1].plot(hist_df.val_categorical_crossentropy, lw=5, label='Validation MLogLoss')
+    axs[1].plot(hist_df.categorical_crossentropy, lw=5, label='Training MLogLoss')
+    axs[1].set_ylabel('MLogLoss')
+    axs[1].set_xlabel('Epoch')
+    axs[1].grid()
+    axs[1].legend(loc=0)
+    fig.savefig('hist.png', dpi=300)
+    plt.show()
 
 valid_predictions = model.predict(x_valid, batch_size=128, verbose=1)
 map3 = mapk(valid_df[['y']].values, preds2catids(valid_predictions).values)
 print('Map3: {:.3f}'.format(map3))
+
+test = pd.read_csv(os.path.join(INPUT_DIR, 'test_simplified.csv'))
+test.head()
+x_test = df_to_image_array_xd(test, size)
+print(test.shape, x_test.shape)
+print('Test array memory {:.2f} GB'.format(x_test.nbytes / 1024.**3 ))
+
+test_predictions = model.predict(x_test, batch_size=128, verbose=1)
+
+top3 = preds2catids(test_predictions)
+top3.head()
+
+cats = list_all_categories()
+id2cat = {k: cat.replace(' ', '_') for k, cat in enumerate(cats)}
+top3cats = top3.replace(id2cat)
+top3cats.head()
+
+test['word'] = top3cats['a'] + ' ' + top3cats['b'] + ' ' + top3cats['c']
+submission = test[['key_id', 'word']]
+submission.to_csv('gs_mn_submission_{}.csv'.format(int(map3 * 10**4)), index=False)
+submission.head()
+
+end = dt.datetime.now()
+print('Latest run {}.\nTotal time {}s'.format(end, (end - start).seconds))
