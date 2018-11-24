@@ -168,3 +168,4 @@ fabric.properties
 
 # My Own
 /input/
+/shuffle-csvs/

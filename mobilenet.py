@@ -16,8 +16,12 @@ from tensorflow.keras.optimizers import Adam
 
 start = dt.datetime.now()
 
-DP_DIR = '../input/shuffle-csvs/'
-INPUT_DIR = 'input/'
+if 'Darwin' in platform():
+    DP_DIR = './shuffle-csvs/'
+    INPUT_DIR = './input/'
+else:
+    DP_DIR = '/big/shuffle-csvs/'
+    INPUT_DIR = '/big/'
 
 BASE_SIZE = 256
 NCSVS = 100
@@ -31,7 +35,7 @@ def f2cat(filename: str) -> str:
 
 
 def list_all_categories():
-    files = os.listdir(os.path.join(INPUT_DIR, 'quickdraw-doodle-recognition'))
+    files = os.listdir(os.path.join(INPUT_DIR, 'train_simplified'))
     return sorted([f2cat(f) for f in files], key=str.lower)
 
 
