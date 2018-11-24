@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras.applications import MobileNet
+from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.applications.mobilenet import preprocess_input
 from tensorflow.keras.callbacks import ReduceLROnPlateau
 from tensorflow.keras.metrics import categorical_accuracy, top_k_categorical_accuracy, categorical_crossentropy
@@ -77,7 +77,7 @@ EPOCHS = 16
 size = 64
 batchsize = 680
 
-model = MobileNet(input_shape=(size, size, 1), alpha=1., weights=None, classes=NCATS)
+model = MobileNetV2(input_shape=(size, size, 1), alpha=1., weights=None, classes=NCATS)
 model.compile(optimizer=Adam(lr=0.002), loss='categorical_crossentropy',
               metrics=[categorical_crossentropy, categorical_accuracy, top_3_accuracy])
 print(model.summary())
