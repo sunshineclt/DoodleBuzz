@@ -39,7 +39,7 @@ print(len(categories))
 if 'Darwin' in platform():
     output_file_prefix = "shuffle-csvs/"
 else:
-    output_file_prefix = "/big/shuffle-csvs"
+    output_file_prefix = "/big/shuffle-csvs/"
 
 for y, cat in tqdm(enumerate(categories)):
     df = s.read_training_csv(cat, nrows=30000)
