@@ -169,3 +169,4 @@ fabric.properties
 # My Own
 /input/
 /shuffle-csvs/
+gs_mn_submission*.csv
