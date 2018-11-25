@@ -147,25 +147,25 @@ callbacks = [
 ]
 hists = []
 hist = model.fit_generator(
-    train_datagen, steps_per_epoch=STEPS, epochs=EPOCHS, verbose=1,
+    train_datagen, steps_per_epoch=STEPS, epochs=EPOCHS * 6, verbose=1,
     validation_data=(x_valid, y_valid),
     callbacks=callbacks
 )
 hists.append(hist)
 
-hist = model.fit_generator(
-    train_datagen, steps_per_epoch=STEPS, epochs=EPOCHS, verbose=1,
-    validation_data=(x_valid, y_valid),
-    callbacks=callbacks
-)
-hists.append(hist)
-
-hist = model.fit_generator(
-    train_datagen, steps_per_epoch=STEPS, epochs=EPOCHS, verbose=1,
-    validation_data=(x_valid, y_valid),
-    callbacks=callbacks
-)
-hists.append(hist)
+# hist = model.fit_generator(
+#     train_datagen, steps_per_epoch=STEPS, epochs=EPOCHS, verbose=1,
+#     validation_data=(x_valid, y_valid),
+#     callbacks=callbacks
+# )
+# hists.append(hist)
+#
+# hist = model.fit_generator(
+#     train_datagen, steps_per_epoch=STEPS, epochs=EPOCHS, verbose=1,
+#     validation_data=(x_valid, y_valid),
+#     callbacks=callbacks
+# )
+# hists.append(hist)
 
 if 'Darwin' in platform():
     hist_df = pd.concat([pd.DataFrame(hist.history) for hist in hists], sort=True)
