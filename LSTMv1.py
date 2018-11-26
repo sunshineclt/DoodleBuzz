@@ -7,10 +7,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from ast import literal_eval
 from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from keras.metrics import top_k_categorical_accuracy
 from keras.preprocessing.sequence import pad_sequences
 from keras.backend.tensorflow_backend import set_session
+from keras.models import Sequential
+from keras.layers import BatchNormalization, Conv1D, LSTM, Dense, Dropout, Bidirectional
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
@@ -77,7 +80,7 @@ else:
 
 STROKE_COUNT = 100
 EPOCHS = 20
-batchsize = 1000
+batchsize = 256
 
 if 'Darwin' in platform():
     DP_DIR = './shuffle-csvs/'
@@ -90,8 +93,6 @@ NCSVS = 100
 NCATS = 340
 np.random.seed(seed=1987)
 tf.set_random_seed(seed=1987)
-
-from ast import literal_eval
 
 
 def _stack_it(raw_strokes):
@@ -135,11 +136,7 @@ y_valid = keras.utils.to_categorical(valid_df.y, num_classes=NCATS)
 print(x_valid.shape, y_valid.shape)
 print('Validation array memory {:.2f} GB'.format(x_valid.nbytes / 1024. ** 3))
 
-train_datagen = image_generator_xd(batchsize=batchsize, ks=range(NCSVS - 2))
-val_datagen = image_generator_xd(batchsize=batchsize, ks=range(NCSVS - 2, NCSVS))
-
-from keras.models import Sequential
-from keras.layers import BatchNormalization, Conv1D, LSTM, Dense, Dropout, Bidirectional
+train_datagen = image_generator_xd(batchsize=batchsize, ks=range(NCSVS - 1))
 
 # if len(get_available_gpus())>0:
 # https://twitter.com/fchollet/status/918170264608817152?lang=en
@@ -169,14 +166,14 @@ weight_path = "{}_weights.best.hdf5".format('stroke_lstm_bidirectional_relu')
 checkpoint = ModelCheckpoint(weight_path, monitor='val_loss', verbose=1,
                              save_best_only=True, mode='min', save_weights_only=True)
 
-reduceLROnPlat = ReduceLROnPlateau(monitor='val_loss', factor=0.8, patience=4,
-                                   verbose=1, mode='auto', epsilon=0.0001, cooldown=5, min_lr=0.0001)
+reduceLROnPlat = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=4,
+                                   verbose=1, mode='auto', min_delta=0.0001, cooldown=3, min_lr=1e-5)
 early = EarlyStopping(monitor="val_loss",
                       mode="min",
                       patience=3)
 callbacks_list = [checkpoint, early, reduceLROnPlat]
 hist = stroke_read_model.fit_generator(train_datagen, steps_per_epoch=STEPS, epochs=EPOCHS, verbose=1,
-                                       validation_data=val_datagen, validation_steps=val_steps,
+                                       validation_data=(x_valid, y_valid),
                                        callbacks=callbacks_list)
 
 if 'Darwin' in platform():
@@ -199,7 +196,7 @@ if 'Darwin' in platform():
     fig.savefig('hist.png', dpi=300)
     plt.show()
 
-valid_predictions = stroke_read_model.predict(x_valid, batch_size=4096, verbose=1)
+valid_predictions = stroke_read_model.predict(x_valid, batch_size=batchsize, verbose=1)
 map3 = mapk(valid_df[['y']].values, preds2catids(valid_predictions).values)
 print('Map3: {:.3f}'.format(map3))
 # lstm_results = stroke_read_model.evaluate(x_valid, y_valid, batch_size=4096)
@@ -210,7 +207,7 @@ x_test = df_to_image_array_xd(test)
 print(test.shape, x_test.shape)
 print('Test array memory {:.2f} GB'.format(x_test.nbytes / 1024. ** 3))
 
-test_predictions = stroke_read_model.predict(x_test, verbose=True, batch_size=4096)
+test_predictions = stroke_read_model.predict(x_test, verbose=True, batch_size=batchsize)
 
 top3 = preds2catids(test_predictions)
 cats = list_all_categories()
@@ -219,7 +216,8 @@ top3cats = top3.replace(id2cat)
 
 test['word'] = top3cats['a'] + ' ' + top3cats['b'] + ' ' + top3cats['c']
 submission = test[['key_id', 'word']]
-submission.to_csv('lstm_relu_datagen.csv', index=False)
+now = dt.datetime.now()
+submission.to_csv('lstm_submission_{}-{}_{}:{}_{}.csv'.format(now.month, now.day, now.hour, now.minute, int(map3 * 10**4)), index=False)
 submission.head()
 
 end = dt.datetime.now()
