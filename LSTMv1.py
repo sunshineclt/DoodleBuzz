@@ -12,8 +12,8 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from keras.metrics import top_k_categorical_accuracy
 from keras.preprocessing.sequence import pad_sequences
 from keras.backend.tensorflow_backend import set_session
-from keras.models import Sequential
-from keras.layers import BatchNormalization, Conv1D, LSTM, Dense, Dropout, Bidirectional
+from keras.models import Sequential, Model
+from keras.layers import BatchNormalization, Conv1D, LSTM, Dense, Dropout, Bidirectional, Input
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
@@ -69,6 +69,7 @@ def get_available_gpus():
 
 
 start = dt.datetime.now()
+LOAD_PREVIOUS_WEIGHT = False
 
 debug = False
 if debug:
@@ -180,24 +181,43 @@ print('Validation array memory {:.2f} GB'.format(x_valid.nbytes / 1024. ** 3))
 
 train_datagen = image_generator_xd(batchsize=batchsize, ks=range(NCSVS - 1), data_augmentation=True)
 
-# if len(get_available_gpus())>0:
+if len(get_available_gpus())>0:
 # https://twitter.com/fchollet/status/918170264608817152?lang=en
-#    from keras.layers import CuDNNLSTM as LSTM # this one is about 3x faster on GPU instances
-stroke_read_model = Sequential()
-stroke_read_model.add(BatchNormalization(input_shape=(None,) + (3,)))
-# filter count and length are taken from the script https://github.com/tensorflow/models/blob/master/tutorials/rnn/quickdraw/train_model.py
-stroke_read_model.add(Conv1D(256, (5,), activation='relu'))
-stroke_read_model.add(Dropout(0.2))
-stroke_read_model.add(Conv1D(256, (5,), activation='relu'))
-stroke_read_model.add(Dropout(0.2))
-stroke_read_model.add(Conv1D(256, (3,), activation='relu'))
-stroke_read_model.add(Dropout(0.2))
-stroke_read_model.add(Bidirectional(LSTM(128, dropout=0.3, recurrent_dropout=0.3, return_sequences=True)))
-stroke_read_model.add(Bidirectional(LSTM(128, dropout=0.3, recurrent_dropout=0.3, return_sequences=True)))
-stroke_read_model.add(Bidirectional(LSTM(128, dropout=0.3, recurrent_dropout=0.3, return_sequences=False)))
-stroke_read_model.add(Dense(512, activation='relu'))
-stroke_read_model.add(Dropout(0.2))
-stroke_read_model.add(Dense(NCATS, activation='softmax'))
+    from keras.layers import CuDNNLSTM as LSTM # this one is about 3x faster on GPU instances
+# stroke_read_model = Sequential()
+# stroke_read_model.add(BatchNormalization(input_shape=(None,) + (3,)))
+# # filter count and length are taken from the script https://github.com/tensorflow/models/blob/master/tutorials/rnn/quickdraw/train_model.py
+# stroke_read_model.add(Conv1D(256, (5,), activation='relu'))
+# stroke_read_model.add(Dropout(0.2))
+# stroke_read_model.add(Conv1D(256, (5,), activation='relu'))
+# stroke_read_model.add(Dropout(0.2))
+# stroke_read_model.add(Conv1D(256, (3,), activation='relu'))
+# stroke_read_model.add(Dropout(0.2))
+# stroke_read_model.add(Bidirectional(LSTM(128, dropout=0.3, recurrent_dropout=0.3, return_sequences=True)))
+# stroke_read_model.add(Bidirectional(LSTM(128, dropout=0.3, recurrent_dropout=0.3, return_sequences=True)))
+# stroke_read_model.add(Bidirectional(LSTM(128, dropout=0.3, recurrent_dropout=0.3, return_sequences=False)))
+# stroke_read_model.add(Dense(512, activation='relu'))
+# stroke_read_model.add(Dropout(0.2))
+# stroke_read_model.add(Dense(NCATS, activation='softmax'))
+# stroke_read_model.compile(optimizer='adam',
+#                           loss='categorical_crossentropy',
+#                           metrics=['categorical_accuracy', top_3_accuracy])
+# stroke_read_model.summary()
+
+inputs = Input(shape=(100, 3))
+x = Conv1D(256, (5, ), activation='relu')(inputs)
+x = Dropout(0.2)(x)
+x = Conv1D(256, (5, ), activation='relu')(x)
+x = Dropout(0.2)(x)
+x = Conv1D(256, (3, ), activation='relu')(x)
+x = Dropout(0.2)(x)
+x = Bidirectional(LSTM(128, dropout=0.3, recurrent_dropout=0.3, return_sequences=True))(x)
+x = Bidirectional(LSTM(128, dropout=0.3, recurrent_dropout=0.3, return_sequences=True))(x)
+x = Bidirectional(LSTM(128, dropout=0.3, recurrent_dropout=0.3, return_sequences=False))(x)
+x = Dense(512, activation='relu')(x)
+x = Dropout(0.2)(x)
+x = Dense(NCATS, activation='softmax')(x)
+stroke_read_model = Model(inputs=inputs, outputs=x)
 stroke_read_model.compile(optimizer='adam',
                           loss='categorical_crossentropy',
                           metrics=['categorical_accuracy', top_3_accuracy])
@@ -205,7 +225,7 @@ stroke_read_model.summary()
 
 weight_path = "{}_weights.best.hdf5".format('stroke_lstm_bidirectional_relu')
 
-if os.path.exists(weight_path):
+if os.path.exists(weight_path) and LOAD_PREVIOUS_WEIGHT:
     print("Loading Model!")
     stroke_read_model.load_weights(weight_path)
     print("Model Loaded!")
