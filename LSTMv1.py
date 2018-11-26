@@ -147,17 +147,10 @@ def image_generator_xd(batchsize, ks, data_augmentation=False):
             filename = os.path.join(DP_DIR, 'train_k{}.csv.gz'.format(k))
             if data_augmentation:
                 for df in pd.read_csv(filename, chunksize=batchsize // SHUFFLE_REPEAT):
-                    print("START")
                     x1 = df['drawing'].map(_shuffle_stack_it)
-                    print("X1")
-                    x2 = np.concatenate(x1, axis=0)
-                    print("X2")
+                    x2 = np.concatenate(x1.values, axis=0)
                     y = df.y
-                    print("y_1")
                     y = np.repeat(y, SHUFFLE_REPEAT)
-                    y = keras.utils.to_categorical(y, num_classes=NCATS)
-                    print(x2.shape)
-                    print(y.shape)
                     yield x2, y
             else:
                 for df in pd.read_csv(filename, chunksize=batchsize):
