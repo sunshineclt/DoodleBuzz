@@ -193,8 +193,11 @@ if 'Darwin' in platform():
     fig.savefig('hist.png', dpi=300)
     plt.show()
 
-lstm_results = stroke_read_model.evaluate(x_valid, y_valid, batch_size=4096)
-print('Accuracy: %2.1f%%, Top 3 Accuracy %2.1f%%' % (100 * lstm_results[1], 100 * lstm_results[2]))
+valid_predictions = stroke_read_model.predict(x_valid, batch_size=4096, verbose=1)
+map3 = mapk(valid_df[['y']].values, preds2catids(valid_predictions).values)
+print('Map3: {:.3f}'.format(map3))
+# lstm_results = stroke_read_model.evaluate(x_valid, y_valid, batch_size=4096)
+# print('Accuracy: %2.1f%%, Top 3 Accuracy %2.1f%%' % (100 * lstm_results[1], 100 * lstm_results[2]))
 
 test = pd.read_csv(os.path.join(INPUT_DIR, 'test_simplified.csv'))
 x_test = df_to_image_array_xd(test)
