@@ -10,6 +10,12 @@ import tensorflow as tf
 from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from keras.metrics import top_k_categorical_accuracy
 from keras.preprocessing.sequence import pad_sequences
+from keras.backend.tensorflow_backend import set_session
+
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
+sess = tf.Session(config=config)
+set_session(sess)  # set this TensorFlow session as the default session for Keras
 
 
 def f2cat(filename: str) -> str:
@@ -70,7 +76,7 @@ else:
     val_steps = 100
 
 STROKE_COUNT = 100
-EPOCHS = 15
+EPOCHS = 20
 batchsize = 1000
 
 if 'Darwin' in platform():
@@ -109,7 +115,7 @@ def _stack_it(raw_strokes):
 def image_generator_xd(batchsize, ks):
     while True:
         for k in np.random.permutation(ks):
-            filename = os.path.join(DP_DIR, 'train_k{}.csv.gz.gz'.format(k))
+            filename = os.path.join(DP_DIR, 'train_k{}.csv.gz'.format(k))
             for df in pd.read_csv(filename, chunksize=batchsize):
                 df['drawing'] = df['drawing'].map(_stack_it)
                 x2 = np.stack(df['drawing'], 0)
@@ -123,7 +129,7 @@ def df_to_image_array_xd(df):
     return x2
 
 
-valid_df = pd.read_csv(os.path.join(DP_DIR, 'train_k{}.csv.gz.gz'.format(NCSVS - 1)), nrows=34000)
+valid_df = pd.read_csv(os.path.join(DP_DIR, 'train_k{}.csv.gz'.format(NCSVS - 1)), nrows=34000)
 x_valid = df_to_image_array_xd(valid_df)
 y_valid = keras.utils.to_categorical(valid_df.y, num_classes=NCATS)
 print(x_valid.shape, y_valid.shape)
