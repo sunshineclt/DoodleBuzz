@@ -151,6 +151,7 @@ def image_generator_xd(batchsize, ks, data_augmentation=False):
                     x2 = np.concatenate(x1.values, axis=0)
                     y = df.y
                     y = np.repeat(y, SHUFFLE_REPEAT)
+                    y = keras.utils.to_categorical(y, num_classes=NCATS)
                     yield x2, y
             else:
                 for df in pd.read_csv(filename, chunksize=batchsize):
