@@ -67,7 +67,7 @@ def get_available_gpus():
 
 start = dt.datetime.now()
 
-debug = True
+debug = False
 if debug:
     STEPS = 200
     val_steps = 10
