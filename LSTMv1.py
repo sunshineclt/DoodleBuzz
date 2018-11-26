@@ -80,7 +80,7 @@ else:
     val_steps = 100
 
 STROKE_COUNT = 100
-EPOCHS = 20
+EPOCHS = 40
 batchsize = 256
 
 if 'Darwin' in platform():
@@ -153,7 +153,10 @@ def image_generator_xd(batchsize, ks, data_augmentation=False):
                     y = df.y
                     y = np.repeat(y, SHUFFLE_REPEAT)
                     y = keras.utils.to_categorical(y, num_classes=NCATS)
-                    yield x2, y
+                    recognized = df['recognized'].values
+                    recognized = np.repeat(recognized, SHUFFLE_REPEAT)
+                    weights = np.where(recognized, np.ones(recognized.shape[0]), np.ones(recognized.shape[0]) * 0.1)
+                    yield x2, y, weights
             else:
                 for df in pd.read_csv(filename, chunksize=batchsize):
                     df['drawing'] = df['drawing'].map(_stack_it)
@@ -206,7 +209,8 @@ if len(get_available_gpus())>0:
 # stroke_read_model.summary()
 
 inputs = Input(shape=(100, 3))
-x = Conv1D(256, (5, ), activation='relu')(inputs)
+x = BatchNormalization(input_shape=(None, ) + (3, ))(inputs)
+x = Conv1D(256, (5, ), activation='relu')(x)
 x = Dropout(0.2)(x)
 x = Conv1D(256, (5, ), activation='relu')(x)
 x = Dropout(0.2)(x)
