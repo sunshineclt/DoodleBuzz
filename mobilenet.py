@@ -191,7 +191,6 @@ map3 = mapk(valid_df[['y']].values, preds2catids(valid_predictions).values)
 print('Map3: {:.3f}'.format(map3))
 
 test = pd.read_csv(os.path.join(INPUT_DIR, 'test_simplified.csv'))
-test.head()
 x_test = df_to_image_array_xd(test, size)
 print(test.shape, x_test.shape)
 print('Test array memory {:.2f} GB'.format(x_test.nbytes / 1024.**3 ))
@@ -199,12 +198,9 @@ print('Test array memory {:.2f} GB'.format(x_test.nbytes / 1024.**3 ))
 test_predictions = model.predict(x_test, batch_size=128, verbose=1)
 
 top3 = preds2catids(test_predictions)
-top3.head()
-
 cats = list_all_categories()
 id2cat = {k: cat.replace(' ', '_') for k, cat in enumerate(cats)}
 top3cats = top3.replace(id2cat)
-top3cats.head()
 
 test['word'] = top3cats['a'] + ' ' + top3cats['b'] + ' ' + top3cats['c']
 submission = test[['key_id', 'word']]
