@@ -113,19 +113,61 @@ def _stack_it(raw_strokes):
                          padding='post').swapaxes(0, 1)
 
 
-def image_generator_xd(batchsize, ks):
+SHUFFLE_REPEAT = 10
+
+
+def _shuffle_stack_it(raw_strokes):
+    stroke_vec = literal_eval(raw_strokes)  # string->list
+    result = []
+    for i in range(SHUFFLE_REPEAT):
+        stroke_num = len(stroke_vec)
+        shuffle_list = np.linspace(0, stroke_num-1, stroke_num)
+        np.random.shuffle(shuffle_list)
+        in_strokes = [(xi, yi, shuffle_list[i], i1)
+                  for i, (x, y) in enumerate(stroke_vec)
+                  for i1, (xi, yi) in enumerate(zip(x, y))]
+        dtype = [('x', np.int), ('y', np.int), ('index1', np.int), ('index2', np.int)]
+        c_strokes = np.array(in_strokes, dtype=dtype)
+        c_strokes.sort(axis=0, order=['index1','index2'])
+        c_strokes = c_strokes[["x", 'y', 'index1']].copy()
+        c_strokes = c_strokes.view((int, len(c_strokes.dtype.names)))
+        # replace stroke id with 1 for continue, 2 for new
+        c_strokes[:, 2] = [1] + np.diff(c_strokes[:, 2]).tolist()
+        c_strokes[:, 2] += 1  # since 0 is no stroke
+        # pad the strokes with zeros
+        result.append(pad_sequences(c_strokes.swapaxes(0, 1),
+                      maxlen=STROKE_COUNT,
+                      padding='post').swapaxes(0, 1))
+    return result
+
+
+def image_generator_xd(batchsize, ks, data_augmentation=False):
     while True:
         for k in np.random.permutation(ks):
             filename = os.path.join(DP_DIR, 'train_k{}.csv.gz'.format(k))
             for df in pd.read_csv(filename, chunksize=batchsize):
-                df['drawing'] = df['drawing'].map(_stack_it)
-                x2 = np.stack(df['drawing'], 0)
-                y = keras.utils.to_categorical(df.y, num_classes=NCATS)
-                yield x2, y
+                if data_augmentation:
+                    x1 = df['drawing'].map(_shuffle_stack_it)
+                    x2 = np.concatenate(x1, axis=0)
+                    y = df.y
+                    y = np.repeat(y, SHUFFLE_REPEAT)
+                    y = keras.utils.to_categorical(y, num_classes=NCATS)
+                    yield x2, y
+                else:
+                    df['drawing'] = df['drawing'].map(_stack_it)
+                    x2 = np.stack(df['drawing'], 0)
+                    y = keras.utils.to_categorical(df.y, num_classes=NCATS)
+                    yield x2, y
 
 
 def df_to_image_array_xd(df):
     df['drawing'] = df['drawing'].map(_stack_it)
+    x2 = np.stack(df['drawing'], 0)
+    return x2
+
+
+def df_to_image_array_shuffle_xd(df):
+    df['drawing'] = df['drawing'].map(_shuffle_stack_it)
     x2 = np.stack(df['drawing'], 0)
     return x2
 
@@ -136,7 +178,7 @@ y_valid = keras.utils.to_categorical(valid_df.y, num_classes=NCATS)
 print(x_valid.shape, y_valid.shape)
 print('Validation array memory {:.2f} GB'.format(x_valid.nbytes / 1024. ** 3))
 
-train_datagen = image_generator_xd(batchsize=batchsize, ks=range(NCSVS - 1))
+train_datagen = image_generator_xd(batchsize=batchsize, ks=range(NCSVS - 1), data_augmentation=True)
 
 # if len(get_available_gpus())>0:
 # https://twitter.com/fchollet/status/918170264608817152?lang=en
