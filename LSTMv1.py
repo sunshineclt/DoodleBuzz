@@ -163,6 +163,11 @@ stroke_read_model.summary()
 
 weight_path = "{}_weights.best.hdf5".format('stroke_lstm_bidirectional_relu')
 
+if os.path.exists(weight_path):
+    print("Loading Model!")
+    stroke_read_model.load_weights(weight_path)
+    print("Model Loaded!")
+
 checkpoint = ModelCheckpoint(weight_path, monitor='val_loss', verbose=1,
                              save_best_only=True, mode='min', save_weights_only=True)
 
