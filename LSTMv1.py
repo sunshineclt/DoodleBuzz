@@ -113,7 +113,7 @@ def _stack_it(raw_strokes):
                          padding='post').swapaxes(0, 1)
 
 
-SHUFFLE_REPEAT = 10
+SHUFFLE_REPEAT = 16
 
 
 def _shuffle_stack_it(raw_strokes):
@@ -145,7 +145,7 @@ def image_generator_xd(batchsize, ks, data_augmentation=False):
     while True:
         for k in np.random.permutation(ks):
             filename = os.path.join(DP_DIR, 'train_k{}.csv.gz'.format(k))
-            for df in pd.read_csv(filename, chunksize=batchsize):
+            for df in pd.read_csv(filename, chunksize=batchsize / SHUFFLE_REPEAT):
                 if data_augmentation:
                     x1 = df['drawing'].map(_shuffle_stack_it)
                     x2 = np.concatenate(x1, axis=0)
