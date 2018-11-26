@@ -75,7 +75,7 @@ if debug:
     STEPS = 200
     val_steps = 10
 else:
-    STEPS = 800
+    STEPS = 2000
     val_steps = 100
 
 STROKE_COUNT = 100
@@ -113,7 +113,7 @@ def _stack_it(raw_strokes):
                          padding='post').swapaxes(0, 1)
 
 
-SHUFFLE_REPEAT = 16
+SHUFFLE_REPEAT = 8
 
 
 def _shuffle_stack_it(raw_strokes):
@@ -219,7 +219,7 @@ reduceLROnPlat = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=4,
 early = EarlyStopping(monitor="val_loss",
                       mode="min",
                       patience=3)
-callbacks_list = [checkpoint, early, reduceLROnPlat]
+callbacks_list = [checkpoint, reduceLROnPlat]
 hist = stroke_read_model.fit_generator(train_datagen, steps_per_epoch=STEPS, epochs=EPOCHS, verbose=1,
                                        validation_data=(x_valid, y_valid),
                                        callbacks=callbacks_list)
