@@ -13,8 +13,7 @@ from keras.metrics import top_k_categorical_accuracy
 from keras.preprocessing.sequence import pad_sequences
 from keras.backend.tensorflow_backend import set_session
 from keras.models import Sequential, Model
-from keras.layers import BatchNormalization, Conv1D, LSTM, Dense, Dropout, Bidirectional, Input
-from keras.activations import relu
+from keras.layers import BatchNormalization, Conv1D, LSTM, Dense, Dropout, Bidirectional, Input, ReLU
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
@@ -213,15 +212,15 @@ inputs = Input(shape=(100, 3))
 x = BatchNormalization(input_shape=(None, ) + (3, ))(inputs)
 x = Conv1D(256, (5, ), activation='linear')(x)
 x = BatchNormalization()(x)
-x = relu(x)
+x = ReLU()(x)
 x = Dropout(0.2)(x)
 x = Conv1D(512, (5, ), activation='linear')(x)
 x = BatchNormalization()(x)
-x = relu(x)
+x = ReLU()(x)
 x = Dropout(0.2)(x)
 x = Conv1D(1024, (3, ), activation='linear')(x)
 x = BatchNormalization()(x)
-x = relu(x)
+x = ReLU()(x)
 x = Dropout(0.2)(x)
 x = Bidirectional(LSTM(512, return_sequences=True))(x)
 x = Bidirectional(LSTM(256, return_sequences=True))(x)
