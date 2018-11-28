@@ -14,6 +14,7 @@ from keras.preprocessing.sequence import pad_sequences
 from keras.backend.tensorflow_backend import set_session
 from keras.models import Sequential, Model
 from keras.layers import BatchNormalization, Conv1D, LSTM, Dense, Dropout, Bidirectional, Input
+from keras.activations import relu
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
@@ -80,7 +81,7 @@ else:
     val_steps = 100
 
 STROKE_COUNT = 100
-EPOCHS = 400
+EPOCHS = 120
 batchsize = 256
 
 if 'Darwin' in platform():
@@ -210,11 +211,17 @@ if len(get_available_gpus())>0:
 
 inputs = Input(shape=(100, 3))
 x = BatchNormalization(input_shape=(None, ) + (3, ))(inputs)
-x = Conv1D(256, (5, ), activation='relu')(x)
+x = Conv1D(256, (5, ), activation='linear')(x)
+x = BatchNormalization()(x)
+x = relu(x)
 x = Dropout(0.2)(x)
-x = Conv1D(512, (5, ), activation='relu')(x)
+x = Conv1D(512, (5, ), activation='linear')(x)
+x = BatchNormalization()(x)
+x = relu(x)
 x = Dropout(0.2)(x)
-x = Conv1D(1024, (3, ), activation='relu')(x)
+x = Conv1D(1024, (3, ), activation='linear')(x)
+x = BatchNormalization()(x)
+x = relu(x)
 x = Dropout(0.2)(x)
 x = Bidirectional(LSTM(512, return_sequences=True))(x)
 x = Bidirectional(LSTM(256, return_sequences=True))(x)
