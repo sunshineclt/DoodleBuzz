@@ -142,7 +142,7 @@ if 'Darwin' in platform():
     fig.savefig('gs.png', dpi=300)
     plt.show()
 
-weight_path = "{}_weights.best.hdf5".format('mobilenetv2')
+weight_path = "./{}_weights.best.hdf5".format('mobilenetv2')
 checkpoint = ModelCheckpoint(weight_path, monitor='val_loss', verbose=1,
                     save_best_only=True, mode='min', save_weights_only=True)
 callbacks = [
