@@ -143,12 +143,12 @@ if 'Darwin' in platform():
     plt.show()
 
 weight_path = "{}_weights.best.hdf5".format('mobilenetv2')
-
-callbacks = [
-    ReduceLROnPlateau(monitor='val_categorical_accuracy', factor=0.5, patience=5,
-                      min_delta=0.005, mode='max', cooldown=3, verbose=1),
-    ModelCheckpoint(weight_path, monitor='val_loss', verbose=1,
+checkpoint = ModelCheckpoint(weight_path, monitor='val_loss', verbose=1,
                     save_best_only=True, mode='min', save_weights_only=True)
+callbacks = [
+    checkpoint,
+    ReduceLROnPlateau(monitor='val_categorical_accuracy', factor=0.5, patience=5,
+                      min_delta=0.005, mode='max', cooldown=3, verbose=1)
 ]
 hists = []
 hist = model.fit_generator(
