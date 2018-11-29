@@ -1,6 +1,7 @@
 import ast
 import datetime as dt
 import os
+import pickle
 from platform import platform
 
 import cv2
@@ -11,7 +12,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.applications.mobilenet import preprocess_input
-from tensorflow.keras.callbacks import ReduceLROnPlateau
+from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
 from tensorflow.keras.metrics import categorical_accuracy, top_k_categorical_accuracy, categorical_crossentropy
 from tensorflow.keras.optimizers import Adam
 
@@ -141,9 +142,13 @@ if 'Darwin' in platform():
     fig.savefig('gs.png', dpi=300)
     plt.show()
 
+weight_path = "{}_weights.best.hdf5".format('mobilenetv2')
+
 callbacks = [
     ReduceLROnPlateau(monitor='val_categorical_accuracy', factor=0.5, patience=5,
-                      min_delta=0.005, mode='max', cooldown=3, verbose=1)
+                      min_delta=0.005, mode='max', cooldown=3, verbose=1),
+    ModelCheckpoint(weight_path, monitor='val_loss', verbose=1,
+                    save_best_only=True, mode='min', save_weights_only=True)
 ]
 hists = []
 hist = model.fit_generator(
@@ -209,3 +214,6 @@ submission.head()
 
 end = dt.datetime.now()
 print('Latest run {}.\nTotal time {}s'.format(end, (end - start).seconds))
+
+with open("mobilenet_hist.pkl", "wb") as f:
+    pickle.dump(hists, f)
