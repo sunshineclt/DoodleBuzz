@@ -9,12 +9,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras.applications import MobileNetV2
-from tensorflow.keras.applications.mobilenet import preprocess_input
-from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
-from tensorflow.keras.metrics import categorical_accuracy, top_k_categorical_accuracy, categorical_crossentropy
-from tensorflow.keras.optimizers import Adam
+import keras
+from keras.applications import MobileNetV2
+from keras.applications.mobilenet import preprocess_input
+from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
+from keras.metrics import categorical_accuracy, top_k_categorical_accuracy, categorical_crossentropy
+from keras.optimizers import Adam
 
 start = dt.datetime.now()
 
