@@ -1,5 +1,6 @@
 import datetime as dt
 import os
+import pickle
 from platform import platform
 
 import keras
@@ -76,12 +77,12 @@ if debug:
     STEPS = 200
     val_steps = 10
 else:
-    STEPS = 2000
+    STEPS = 800
     val_steps = 100
 
 STROKE_COUNT = 100
 EPOCHS = 120
-batchsize = 256
+batchsize = 128
 
 if 'Darwin' in platform():
     DP_DIR = './shuffle-csvs/'
@@ -142,21 +143,49 @@ def _shuffle_stack_it(raw_strokes):
     return result
 
 
+def _shuffle_stack_it_new(raw_strokes):
+    stroke_vec = literal_eval(raw_strokes)  # string->list
+    stroke_num = len(stroke_vec)
+    shuffle_list = np.linspace(0, stroke_num-1, stroke_num)
+    np.random.shuffle(shuffle_list)
+    in_strokes = [(xi, yi, shuffle_list[i], i1)
+              for i, (x, y) in enumerate(stroke_vec)
+              for i1, (xi, yi) in enumerate(zip(x, y))]
+    dtype = [('x', np.int), ('y', np.int), ('index1', np.int), ('index2', np.int)]
+    c_strokes = np.array(in_strokes, dtype=dtype)
+    c_strokes.sort(axis=0, order=['index1','index2'])
+    c_strokes = c_strokes[["x", 'y', 'index1']].copy()
+    c_strokes = c_strokes.view((int, len(c_strokes.dtype.names)))
+    # replace stroke id with 1 for continue, 2 for new
+    c_strokes[:, 2] = [1] + np.diff(c_strokes[:, 2]).tolist()
+    c_strokes[:, 2] += 1  # since 0 is no stroke
+    # pad the strokes with zeros
+    return pad_sequences(c_strokes.swapaxes(0, 1),
+                         maxlen=STROKE_COUNT,
+                         padding='post').swapaxes(0, 1)
+
+
 def image_generator_xd(batchsize, ks, data_augmentation=False):
     while True:
         for k in np.random.permutation(ks):
             filename = os.path.join(DP_DIR, 'train_k{}.csv.gz'.format(k))
             if data_augmentation:
-                for df in pd.read_csv(filename, chunksize=batchsize // SHUFFLE_REPEAT):
-                    x1 = df['drawing'].map(_shuffle_stack_it)
-                    x2 = np.concatenate(x1.values, axis=0)
-                    y = df.y
-                    y = np.repeat(y, SHUFFLE_REPEAT)
-                    y = keras.utils.to_categorical(y, num_classes=NCATS)
-                    recognized = df['recognized'].values
-                    recognized = np.repeat(recognized, SHUFFLE_REPEAT)
-                    weights = np.where(recognized, np.ones(recognized.shape[0]), np.ones(recognized.shape[0]) * 0.1)
-                    yield x2, y, weights
+                # for df in pd.read_csv(filename, chunksize=batchsize // SHUFFLE_REPEAT):
+                #     x1 = df['drawing'].map(_shuffle_stack_it)
+                #     x2 = np.concatenate(x1.values, axis=0)
+                #     y = df.y
+                #     y = np.repeat(y, SHUFFLE_REPEAT)
+                #     y = keras.utils.to_categorical(y, num_classes=NCATS)
+                #     recognized = df['recognized'].values
+                #     recognized = np.repeat(recognized, SHUFFLE_REPEAT)
+                #     weights = np.where(recognized, np.ones(recognized.shape[0]), np.ones(recognized.shape[0]) * 0.1)
+                #     yield x2, y, weights
+                for repeat in range(SHUFFLE_REPEAT):
+                    for df in pd.read_csv(filename, chunksize=batchsize):
+                        x1 = df['drawing'].map(_shuffle_stack_it_new)
+                        x2 = np.stack(x1, 0)
+                        y = keras.utils.to_categorical(df.y, num_classes=NCATS)
+                        yield x2, y
             else:
                 for df in pd.read_csv(filename, chunksize=batchsize):
                     df['drawing'] = df['drawing'].map(_stack_it)
@@ -214,16 +243,16 @@ x = Conv1D(256, (5, ), activation='linear')(x)
 x = BatchNormalization()(x)
 x = ReLU()(x)
 x = Dropout(0.2)(x)
-x = Conv1D(512, (5, ), activation='linear')(x)
+x = Conv1D(256, (5, ), activation='linear')(x)
 x = BatchNormalization()(x)
 x = ReLU()(x)
 x = Dropout(0.2)(x)
-x = Conv1D(1024, (3, ), activation='linear')(x)
+x = Conv1D(256, (3, ), activation='linear')(x)
 x = BatchNormalization()(x)
 x = ReLU()(x)
 x = Dropout(0.2)(x)
-x = Bidirectional(LSTM(512, return_sequences=True))(x)
-x = Bidirectional(LSTM(256, return_sequences=True))(x)
+x = Bidirectional(LSTM(128, return_sequences=True))(x)
+x = Bidirectional(LSTM(128, return_sequences=True))(x)
 x = Bidirectional(LSTM(128, return_sequences=False))(x)
 x = Dense(512, activation='relu')(x)
 x = Dropout(0.2)(x)
@@ -300,3 +329,6 @@ submission.head()
 
 end = dt.datetime.now()
 print('Latest run {}.\nTotal time {}s'.format(end, (end - start).seconds))
+
+with open("lstm_hist.pkl", "wb") as f:
+    pickle.dump(hist, f)
