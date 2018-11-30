@@ -81,7 +81,7 @@ else:
     val_steps = 100
 
 STROKE_COUNT = 100
-EPOCHS = 120
+EPOCHS = 300
 batchsize = 128
 
 if 'Darwin' in platform():
@@ -247,11 +247,11 @@ x = Conv1D(256, (5, ), activation='linear')(x)
 x = BatchNormalization()(x)
 x = ReLU()(x)
 x = Dropout(0.2)(x)
-x = Conv1D(256, (3, ), activation='linear')(x)
+x = Conv1D(512, (3, ), activation='linear')(x)
 x = BatchNormalization()(x)
 x = ReLU()(x)
 x = Dropout(0.2)(x)
-x = Bidirectional(LSTM(128, return_sequences=True))(x)
+x = Bidirectional(LSTM(256, return_sequences=True))(x)
 x = Bidirectional(LSTM(128, return_sequences=True))(x)
 x = Bidirectional(LSTM(128, return_sequences=False))(x)
 x = Dense(512, activation='relu')(x)
