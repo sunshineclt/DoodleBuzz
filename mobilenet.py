@@ -216,4 +216,4 @@ end = dt.datetime.now()
 print('Latest run {}.\nTotal time {}s'.format(end, (end - start).seconds))
 
 with open("mobilenet_hist.pkl", "wb") as f:
-    pickle.dump(hists, f)
+    pickle.dump(hist.history, f)
