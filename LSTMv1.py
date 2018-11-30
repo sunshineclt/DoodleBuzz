@@ -70,7 +70,7 @@ def get_available_gpus():
 
 
 start = dt.datetime.now()
-LOAD_PREVIOUS_WEIGHT = False
+LOAD_PREVIOUS_WEIGHT = True
 
 debug = False
 if debug:
@@ -185,7 +185,9 @@ def image_generator_xd(batchsize, ks, data_augmentation=False):
                         x1 = df['drawing'].map(_shuffle_stack_it_new)
                         x2 = np.stack(x1, 0)
                         y = keras.utils.to_categorical(df.y, num_classes=NCATS)
-                        yield x2, y
+                        recognized = df['recognized'].values
+                        weights = np.where(recognized, np.ones(recognized.shape[0]), np.ones(recognized.shape[0]) * 0.1)
+                        yield x2, y, weights
             else:
                 for df in pd.read_csv(filename, chunksize=batchsize):
                     df['drawing'] = df['drawing'].map(_stack_it)
