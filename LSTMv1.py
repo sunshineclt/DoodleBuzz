@@ -272,6 +272,8 @@ if os.path.exists(weight_path) and LOAD_PREVIOUS_WEIGHT:
     stroke_read_model.load_weights(weight_path)
     print("Model Loaded!")
 
+# stroke_read_model.save("lstm_model_with_weights.h5")
+
 checkpoint = ModelCheckpoint(weight_path, monitor='val_loss', verbose=1,
                              save_best_only=True, mode='min', save_weights_only=True)
 

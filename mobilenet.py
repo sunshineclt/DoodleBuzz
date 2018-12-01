@@ -73,6 +73,7 @@ def top_3_accuracy(y_true, y_pred):
     return top_k_categorical_accuracy(y_true, y_pred, k=3)
 
 
+LOAD_PREVIOUS_WEIGHT = True
 STEPS = 800
 EPOCHS = 16
 size = 64
@@ -143,6 +144,14 @@ if 'Darwin' in platform():
     plt.show()
 
 weight_path = "./{}_weights.best.hdf5".format('mobilenetv2')
+
+if os.path.exists(weight_path) and LOAD_PREVIOUS_WEIGHT:
+    print("Loading Model!")
+    model.load_weights(weight_path)
+    print("Model Loaded!")
+
+# model.save("mobilenet_model_with_weights.h5")
+
 checkpoint = ModelCheckpoint(weight_path, monitor='val_loss', verbose=1,
                     save_best_only=True, mode='min', save_weights_only=True)
 callbacks = [
