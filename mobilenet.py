@@ -73,9 +73,9 @@ def top_3_accuracy(y_true, y_pred):
     return top_k_categorical_accuracy(y_true, y_pred, k=3)
 
 
-LOAD_PREVIOUS_WEIGHT = True
+LOAD_PREVIOUS_WEIGHT = False
 STEPS = 800
-EPOCHS = 16
+EPOCHS = 50
 size = 64
 batchsize = 340
 
