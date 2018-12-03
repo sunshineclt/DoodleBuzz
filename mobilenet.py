@@ -110,7 +110,9 @@ def image_generator_xd(size, batchsize, ks, lw=6, time_color=True):
                                              time_color=time_color)
                 x = preprocess_input(x).astype(np.float32)
                 y = keras.utils.to_categorical(df.y, num_classes=NCATS)
-                yield x, y
+                recognized = df['recognized'].values
+                weights = np.where(recognized, np.ones(recognized.shape[0]), np.ones(recognized.shape[0]) * 0.1)
+                yield x, y, weights
 
 
 def df_to_image_array_xd(df, size, lw=6, time_color=True):
