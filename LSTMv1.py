@@ -80,9 +80,9 @@ else:
     STEPS = 800
     val_steps = 100
 
-STROKE_COUNT = 100
+STROKE_COUNT = 200
 EPOCHS = 300
-batchsize = 128
+batchsize = 64
 
 if 'Darwin' in platform():
     DP_DIR = './shuffle-csvs/'
@@ -214,7 +214,7 @@ y_valid = keras.utils.to_categorical(valid_df.y, num_classes=NCATS)
 print(x_valid.shape, y_valid.shape)
 print('Validation array memory {:.2f} GB'.format(x_valid.nbytes / 1024. ** 3))
 
-train_datagen = image_generator_xd(batchsize=batchsize, ks=range(NCSVS - 1), data_augmentation=False)
+train_datagen = image_generator_xd(batchsize=batchsize, ks=range(NCSVS - 1), data_augmentation=True)
 
 if len(get_available_gpus())>0:
 # https://twitter.com/fchollet/status/918170264608817152?lang=en
