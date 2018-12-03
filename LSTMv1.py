@@ -70,7 +70,7 @@ def get_available_gpus():
 
 
 start = dt.datetime.now()
-LOAD_PREVIOUS_WEIGHT = True
+LOAD_PREVIOUS_WEIGHT = False
 
 debug = False
 if debug:
