@@ -239,7 +239,7 @@ if len(get_available_gpus())>0:
 #                           metrics=['categorical_accuracy', top_3_accuracy])
 # stroke_read_model.summary()
 
-inputs = Input(shape=(100, 3))
+inputs = Input(shape=(200, 3))
 x = BatchNormalization(input_shape=(None, ) + (3, ))(inputs)
 x = Conv1D(256, (5, ), activation='linear')(x)
 x = BatchNormalization()(x)
