@@ -241,7 +241,7 @@ if len(get_available_gpus())>0:
 
 inputs = Input(shape=(100, 3))
 x = BatchNormalization(input_shape=(None, ) + (3, ))(inputs)
-x = Conv1D(256, (9, ), activation='linear')(x)
+x = Conv1D(128, (9, ), activation='linear')(x)
 x = BatchNormalization()(x)
 x = ReLU()(x)
 x = Dropout(0.5)(x)
