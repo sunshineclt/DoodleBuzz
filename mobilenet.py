@@ -77,7 +77,7 @@ LOAD_PREVIOUS_WEIGHT = True
 STEPS = 800
 EPOCHS = 16
 size = 64
-batchsize = 680
+batchsize = 340
 
 model = MobileNetV2(input_shape=(size, size, 1), alpha=1., weights=None, classes=NCATS)
 model.compile(optimizer=Adam(lr=0.002), loss='categorical_crossentropy',
@@ -163,7 +163,7 @@ callbacks = [
 ]
 hists = []
 hist = model.fit_generator(
-    train_datagen, steps_per_epoch=STEPS, epochs=EPOCHS * 6, verbose=1,
+    train_datagen, steps_per_epoch=STEPS, epochs=EPOCHS, verbose=1,
     validation_data=(x_valid, y_valid),
     callbacks=callbacks
 )
