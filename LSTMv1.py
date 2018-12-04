@@ -70,7 +70,7 @@ def get_available_gpus():
 
 
 start = dt.datetime.now()
-LOAD_PREVIOUS_WEIGHT = False
+LOAD_PREVIOUS_WEIGHT = True
 
 debug = False
 if debug:
@@ -214,7 +214,7 @@ y_valid = keras.utils.to_categorical(valid_df.y, num_classes=NCATS)
 print(x_valid.shape, y_valid.shape)
 print('Validation array memory {:.2f} GB'.format(x_valid.nbytes / 1024. ** 3))
 
-train_datagen = image_generator_xd(batchsize=batchsize, ks=range(NCSVS - 1), data_augmentation=True)
+train_datagen = image_generator_xd(batchsize=batchsize, ks=range(NCSVS - 1), data_augmentation=False)
 
 if len(get_available_gpus())>0:
 # https://twitter.com/fchollet/status/918170264608817152?lang=en
