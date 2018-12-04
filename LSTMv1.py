@@ -81,7 +81,7 @@ else:
     val_steps = 100
 
 STROKE_COUNT = 200
-EPOCHS = 300
+EPOCHS = 200
 batchsize = 64
 
 if 'Darwin' in platform():
